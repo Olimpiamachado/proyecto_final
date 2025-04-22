@@ -151,7 +151,7 @@ def registrar_usuario(usuario, contraseña):
 def verificar_usuario(usuario, contraseña):
     conn = sqlite3.connect('data.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM Usuarios WHERE usuario = ?', (usuario,))
+    cursor.execute('SELECT contraseña FROM Usuarios WHERE usuario = ?', (usuario,))
     row = cursor.fetchone()
     conn.close()
 
