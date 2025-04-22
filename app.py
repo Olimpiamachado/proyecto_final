@@ -105,5 +105,67 @@ def eliminar_paciente(id):
     return redirect(url_for('index'))
 
 
+#Definición para hacer el login de un usuario
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        #comprobamos que el usuario y la ontraseña son correctos ussando la función verificar_usuario de db.py
+        if db.verificar_usuario(request.form['usuario'], request.form['contraseña']):
+            #si son correctos, almacenamos el nombre de usuario en la sesión(iniciamos sesión)
+            session['usuario'] = request.form['usuario']
+            flash('Inicio de sesión exitoso.')
+            return redirect(url_for('index'))
+        else:
+            #si no son correctos, mostramos un mensaje de error
+            flash('Usuario o contraseña incorrectos.')
+    
+    #Si la solicitud es GET, simplemente renderizamos el formulario de inicio de sesión
+    return render_template('login.html')
+
+
+
+#Ruta para manejar el registro de usuarios
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        #Intentamos registrar el usuario usando la función registrar_usuario de db.py
+        exito = db.registrar_usuario(request.form['usuario'], request.form['contraseña'])
+        if exito:
+            flash('El usuario fue registrado. Ahora puedes iniciar sesión.', 'success')
+        #redirigimos a la página de inicio de sesión
+            return redirect(url_for('login'))
+        else:  
+            #Error el usuario ya exixte 
+            flash('Este usuario ya exixte.', 'danger') 
+    
+    #Si la solicitud es GET, simplemente renderizamos el formulario de registro
+    return render_template('register.html')    
+
+
+
+#Ruta para cerrar sesión
+@app.route('/logout')
+def logout():
+    #Eliminamos el nombre de usuario de la sesión (cerramos sesión)
+    session.pop('usuario', None)
+    flash('Has cerrado sesión exitosamente.')
+    #Redirigimos a la página principal
+    return redirect(url_for('index'))
+    
+    
+#Def para que antes de cualqier requerimiento se ejecute "requerir_login"
+@app.before_request
+def requerir_login():
+    #Esta función se asegura de que los usuarios que intenten acceder a ciertas rutas estén autenticados
+    rutas_libres = ['login', 'registro', 'static'] # Rutas que no requieren autenticación
+    
+    if request.endpoint not in rutas_libres and 'usuario' not in session:
+        # Si el usuario no está autenticado y la ruta no está en la lista de rutas libres, redirigir a login
+        flash('Debes iniciar sesión para acceder a esta página.')
+        return redirect(url_for('login'))
+    
+    
+    
+    
 app.run(host= '0.0.0.0', port=5000, debug=True)
 

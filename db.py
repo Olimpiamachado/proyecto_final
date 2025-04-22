@@ -160,3 +160,4 @@ def verificar_usuario(usuario, contraseña):
         return check_password_hash(hashed_contraseña, contraseña)# Verificamos la contraseña
     return False #Usuario no encontrado o contraseña incorrecta
 
+
