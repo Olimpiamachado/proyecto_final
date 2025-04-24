@@ -1,7 +1,11 @@
-from flask import Flask, request, render_template, redirect, url_for, session, flash
+from flask import Flask, request, render_template, redirect, url_for, session, flash, Response	
 
+import csv
+import pandas as pd
+import sqlite3
 import db
 import secrets
+import openpyxl
 
 """ import logging
 
@@ -164,7 +168,96 @@ def requerir_login():
         flash('Debes iniciar sesión para acceder a esta página.')
         return redirect(url_for('login'))
     
+@app.route('/exportar_csv')
+def exportar_csv():
+    # Conectarnos a la base de datos
+    conn = sqlite3.connect('data.db')
+    # Creamos un cursor para ejecutar comandos SQL
+    cursor = conn.cursor()
+    # Ejecutamos el comando SQL para obtener todos los pacientes
+    cursor.execute('SELECT nombre, edad, diagnostico FROM Pacientes')
+
+    filas = cursor.fetchall()
+    # Obtenemos los nombres de las columnas
+
+    conn.close()
+    # Creamos un objeto de respuesta CSV
+
+    def generar_csv():
+
+        yield 'Nombre,Edad,Diagnostico\n'  # Encabezados de columna
+
+        for fila in filas:
+            yield f'{fila[0]},{fila[1]},{fila[2]}\n'  # Datos de cada fila
+            # para cada fila se genera una línea CSV
+
+    return Response(generar_csv(), mimetype='text/csv',
+                    headers={'Content-Disposition': 'attachment; filename=pacientes.csv'})
+
+    # 'Response' crea una respuesta HTTP con el contenido generado por la función 'generar_csv'.
+    # 'mimetype' especifica el tipo de contenido como CSV, y 
+    # 'headers' establece el nombre del archivo CSV que se descargará.
+    # La función 'generar_csv' genera el contenido CSV línea por línea, 
+    # lo que es eficiente para grandes conjuntos de datos.
+
+
+@app.route('/exportar_excel')
+def exportar_excel():
+    conn = sqlite3.connect('data.db')
     
+    # pd.read_sql_query lee los datos de la tabla 'Pacientes'
+    # y los almacena en un DataFrame de pandas
+    df = pd.read_sql_query('SELECT nombre, edad, diagnostico FROM Pacientes', conn)
+    conn.close()
+
+    # Creamos un objeto de respuesta Excel
+    output = pd.ExcelWriter('pacientes.xlsx', engine='openpyxl')
+    df.to_excel(output, index=False, sheet_name='Pacientes')
+
+    output.close()
+
+    # Abrir el archivo Excel en modo lectura binaria ('rb') para enviarlo en la respuesta
+    with open('pacientes.xlsx', 'rb') as f:
+        data = f.read()
+
+    # Resgresar una respuesta HTTP con el archivo Excel
+    return Response(data, 
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    headers={'Content-Disposition': 'attachment; filename=pacientes.xlsx'})
+    # Response crea una respuesta HTTP con el contenido del archivo Excel.
+    # 'mimetype' especifica el tipo de contenido como Excel, y
+    # 'headers' establece el nombre del archivo Excel que se descargará.
+
+
+# Función para generar las gráficas de los pacientes
+@app.route('/graficas')
+def graficas():
+    # Conexión a la base de datos
+    conn = sqlite3.connect('data.db')
+    cursor = conn.cursor()
+    # Ejecutamos la consulta SQL para obtener el conteo de pacientes por diagnóstico
+    cursor.execute('SELECT diagnostico, COUNT(*) FROM Pacientes GROUP BY diagnostico')
+    # Obtenemos los resultados
+    resultados = cursor.fetchall()
+
+    # Consulta para obtener distribución de edades de los pacientes
+    cursor.execute('SELECT edad FROM Pacientes')
+    filas = cursor.fetchall()
+    edades = []
+    for fila in filas:
+        edades.append(fila[0])
+
+    conn.close()
+
+    # Preparamos los datos para las gráficas
+    etiquetas = [fila[0] for fila in resultados]
+    conteos = [fila[1] for fila in resultados] # número de pacientes por diagnóstico
+
+    return render_template('graficas.html', etiquetas=etiquetas, conteos=conteos, edades=edades)
+
+
+
+
     
     
 app.run(host= '0.0.0.0', port=5000, debug=True)
