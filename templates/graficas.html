@@ -21,7 +21,6 @@
     // Gráfico de diagnósticos
     const ctxDiagnosticos = document.getElementById('graficoDiagnosticos');
 
-    // Se crea el gráfico de barras
     new Chart(ctxDiagnosticos, {
         type: 'bar',
         data: {
@@ -33,13 +32,20 @@
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 1
             }]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribución de Pacientes por Diagnóstico'
+                }
+            }
         }
     });
 
     // Gráfico de edades
     const ctxEdades = document.getElementById('graficoEdades');
 
-    // Se crea el gráfico de líneas
     new Chart(ctxEdades, {
         type: 'line',
         data: {
@@ -52,6 +58,14 @@
                 backgroundColor: 'rgba(153, 102, 255, 0.2)',
                 tension: 0.3
             }]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribución de Pacientes por Edad'
+                }
+            }
         }
     });
 </script>

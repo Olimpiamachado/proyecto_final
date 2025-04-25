@@ -258,7 +258,14 @@ def graficas():
 
 
 
+
+if __name__ == '__main__':
+    # Ejecutar la aplicación Flask en modo de depuración
+    # Esto permite ver los errores y cambios en tiempo real
+    #app.run(debug=True)
+    # Ejecutar la aplicación Flask en modo de producción
+    # Esto es más seguro y eficiente para un entorno de producción real 
+    app.run()
     
-    
-app.run(host= '0.0.0.0', port=5000, debug=True)
+#app.run(host= '0.0.0.0', port=5000, debug=True)
 
